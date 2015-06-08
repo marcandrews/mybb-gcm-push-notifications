@@ -3,7 +3,7 @@ This plugin for MyBB 1.8x pushes notifications via Google Cloud Messenging to Ch
 
 ## Requirements
 - MyBB hosted over HTTPS
-- Modern version of Chrome
+- Modern version of Chrome (tested on Windows and Android, but all platforms should work)
 
 ## Installation instructions
 
