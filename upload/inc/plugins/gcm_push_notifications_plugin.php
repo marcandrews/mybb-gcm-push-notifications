@@ -6,7 +6,6 @@ if(!defined("IN_MYBB"))
     die("Direct initialization of this file is not allowed.");
 }
 
-define("GOOGLE_SENDER_ID", "506914853858");
 define("GOOGLE_API_KEY", "GOOGLE_API_KEY");   
 
 function gcm_push_notifications_plugin_info()
