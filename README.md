@@ -23,7 +23,7 @@ This plugin for MyBB 1.8x pushes notifications via Google Cloud Messenging to Ch
    - add Your Forum Name to 62,66,72:`title`
 
  4. Update gcm_push_notifications_plugin.php
-   - define your Google API Key at 10:`GOOGLE_API_KEY` (from 1.iv)
+   - define your Google API Key at 9:`GOOGLE_API_KEY` (from 1.iv)
 
  5. Make sure gcm_push_notifications_plugin.log is writable
 
