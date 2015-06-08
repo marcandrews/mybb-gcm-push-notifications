@@ -13,7 +13,7 @@ This plugin for MyBB 1.8x pushes notifications via Google Cloud Messenging to Ch
     3. Under APIs & auth > Credentials, create a new key
     4. Your API key is your Google API key
 
- 1. Extract the zip and upload to your forum's root
+ 1. [Download ZIP](https://github.com/marcandrews/gcm-push-notifications-for-mybb/archive/master.zip) and extract the contents of the upload folder to your forum's root
 
  2. Update manifest.json
    - add your 2:`name`, 3:`short_name` and 11:`gcm_sender_id` (from 1.ii)
