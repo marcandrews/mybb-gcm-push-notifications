@@ -1,6 +1,10 @@
 # GCM Push Notifications for MyBB
 This plugin for MyBB 1.8x pushes notifications via Google Cloud Messenging to Chrome after a post is made to a user's subscribed thread.
 
+## Requirements
+- MyBB hosted over HTTPS
+- Modern version of Chrome
+
 ## Installation instructions
 
  1. Obtain your Google Sender ID and API key
@@ -32,3 +36,9 @@ This plugin for MyBB 1.8x pushes notifications via Google Cloud Messenging to Ch
  7. Activate the plugin from your MyBB Admin CP
 
  8. Enable GCM Push Notifications from your User CP > Edit Options (under Default Thread Subscription Mode)
+
+## Screenshots
+### Android
+<img src=assets/i/android.png width=360 height=640 />
+### Desktop
+<img src=assets/i/desktop.png />
