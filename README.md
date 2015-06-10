@@ -1,9 +1,20 @@
 # GCM Push Notifications for MyBB
 This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome after a post is made to a user's subscribed thread.
 
+
 ## Requirements
 - MyBB 1.8x hosted over HTTPS
 - Modern version of Chrome (tested on Windows and Android, but all platforms should work)
+
+
+## Demo
+ 1. Make sure your Chrome browser is synced with a Google account
+ 2. Navigate to my [MyBB Dev Forum](https://chivegaming.org/dev/) and register
+ 3. Enable GCM Push Notifications from your User CP > [Edit Options](https://chivegaming.org/dev/usercp.php?action=options) (under Default Thread Subscription Mode)
+ 4. Post a new thread or subscribe to an exisiting one
+ 5. Open a new Chrome incognito window, and register a second account on my MyBB Dev Forum
+ 6. Post to your first account's subscribed thread to see notification
+
 
 ## Installation instructions
 
@@ -37,7 +48,9 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
 
  8. Make sure your Chrome browser is synced with an account, and then enable GCM Push Notifications from your User CP > Edit Options (under Default Thread Subscription Mode)
 
+
 ## Screenshots
+
 ### Android
 <img src=assets/i/android.png width=360 height=640 />
 ### Desktop
