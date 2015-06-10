@@ -40,8 +40,8 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
 
  6. In your theme's User Control Panel Templates > usercp_options template, directly after `{$headerinclude}`, add: 
     ```
-    <script type="text/javascript" src="jscripts/gcm_push_notifications.js">
-    </script><link rel="manifest" href="manifest.json">
+    <script type="text/javascript" src="jscripts/gcm_push_notifications.js"></script>
+    <link rel="manifest" href="manifest.json">
     ```
 
  7. Activate the plugin from your MyBB Admin CP
