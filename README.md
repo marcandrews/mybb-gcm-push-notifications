@@ -46,8 +46,6 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
 
  7. Activate the plugin from your MyBB Admin CP
 
- 8. Make sure your Chrome browser is synced with an account, and then enable GCM Push Notifications from your User CP > Edit Options (under Default Thread Subscription Mode)
-
 
 ## Screenshots
 
