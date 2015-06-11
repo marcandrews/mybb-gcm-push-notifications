@@ -1,21 +1,23 @@
 var ENDPOINT = 'gcm_push_notifications.php';
 var isEnabled = false;
 
-window.addEventListener('load', function() {
+function getCookie(cname) {
+    var name = 'dev_' + cname + '=';
+    var ca = document.cookie.split(';');
+    for(var i=0; i<ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1);
+        if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+    }
+    return "";
+}
+
+window.addEventListener('load', function () {
     // Add button to Edit Settings User CP page
-    var referenceNode = document.getElementById('subscriptionmethod'),
-        br1 = document.createElement('br'),
-        br2 = document.createElement('br'),
-        pushButton = document.createElement('button');
-    pushButton.setAttribute('type', 'button');
-    pushButton.setAttribute('class', 'gcm-push-button');
-    pushButton.disabled = true;
-    pushButton.innerHTML = 'Enable GCM Push Notifciations';
-    referenceNode.parentNode.insertBefore(pushButton, referenceNode.nextSibling);
-    referenceNode.parentNode.insertBefore(br1, referenceNode.nextSibling);
-    referenceNode.parentNode.insertBefore(br2, referenceNode.nextSibling);
-    
-    pushButton.addEventListener('click', function() {
+    var referenceNode = document.getElementById('subscriptionmethod');
+    referenceNode.insertAdjacentHTML('afterend', '<div><br><strong>GCM Push Notifications</strong></div><button type="button" class="gcm-push-button" style="display:block">Enable GCM Push Notifciations</button>');
+    var pushButton = document.querySelector('.gcm-push-button');
+    pushButton.addEventListener('click', function () {
         if (isEnabled) {
             unsubscribe();
         } else {
@@ -55,6 +57,7 @@ function initialiseState() {
         return;
     }
 
+    
     // We need the service worker registration to check for a subscription  
     navigator.serviceWorker.ready.then(function(serviceWorkerRegistration) {
         // Do we already have a push message subscription?  
@@ -70,9 +73,9 @@ function initialiseState() {
                     // to allow the user to enable push  
                     return;
                 }
-
+                subId = subscription.subscriptionId;
                 // Keep your server in sync with the latest subscriptionId
-                registerSubscriptionToServer(subscription);
+                registerSubscriptionToServer(subId);
 
                 // Set your UI to show they have subscribed for  
                 // push messages  
@@ -83,6 +86,42 @@ function initialiseState() {
                 console.warn('Error during getSubscription()', err);
             });
     });
+    
+    // Retrieve a list of registered devices
+    fetch(ENDPOINT, {
+        credentials: 'include',
+        method: 'post',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: 'devices=1'
+    }).then(function(response) {
+        if (response.status !== 200) {
+            console.log('Looks like there was a problem. Status Code: ' + response.status);
+            // Throw an error so the promise is rejected and catch() is executed
+            throw new Error();
+        }
+        return response.json();
+    }).then(function(json) {
+        console.log('Parsed json:', json.result.devices);
+        if (json) {
+            var pushButton = document.querySelector('.gcm-push-button');
+            var n = Object.keys(json.result.devices).length;
+            for (i = 0; i < n; i++) { 
+                if (typeof subId !== 'undefined' && json.result.devices[i].subid == subId) {
+                    pushButton.style.display = 'none';
+                    pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.devices[i].deviceid + '" class="current">' + json.result.devices[i].device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
+                } else {
+                    pushButton.insertAdjacentHTML('afterend', '<div id="did'+json.result.devices[i].deviceid+'">'+json.result.devices[i].device+' (<a href="#!" onClick="revokeSubscriptionFromServer(\'' + json.result.devices[i].subid + '\',\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
+                }
+            }
+        } else {
+            console.log('No registered devices found');
+        }
+    }).catch(function(ex) {
+        console.log('parsing failed', ex);
+    }).catch(function(err) {
+        console.error('Unable to retrieve data', err);
+    })
+    
 }
 
 function subscribe() {
@@ -99,10 +138,10 @@ function subscribe() {
                 pushButton.textContent = 'Disable GCM Push Notifciations';
                 pushButton.disabled = false;
 
-                // TODO: Send the subscription.subscriptionId and   
+                // Send the subscription.subscriptionId and   
                 // subscription.endpoint to your server  
                 // and save it to send a push message at a later date   
-                registerSubscriptionToServer(subscription);
+                registerSubscriptionToServer(subscription.subscriptionId);
             })
             .catch(function(e) {
                 if (Notification.permission === 'denied') {
@@ -124,7 +163,7 @@ function subscribe() {
     });
 }
 
-function unsubscribe() {
+function unsubscribe(deviceid) {
     var pushButton = document.querySelector('.gcm-push-button');
     pushButton.disabled = true;
 
@@ -144,10 +183,10 @@ function unsubscribe() {
                 }
 
                 // var subscriptionId = pushSubscription.subscriptionId;  
-                // TODO: Make a request to your server to remove  
+                // Make a request to your server to remove  
                 // the subscriptionId from your data store so you   
                 // don't attempt to send them push messages anymore
-                revokeSubscriptionFromServer(pushSubscription);
+                revokeSubscriptionFromServer(pushSubscription.subscriptionId, deviceid);
 
                 // We have a subscription, so call unsubscribe on it  
                 pushSubscription.unsubscribe().then(function(successful) {
@@ -170,36 +209,54 @@ function unsubscribe() {
     });
 }
 
-function registerSubscriptionToServer(subscription) {
+function registerSubscriptionToServer(subid) {
     fetch(ENDPOINT, {
         credentials: 'include',
         method: 'post',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'register=1&regid='+subscription.subscriptionId
+        body: 'register=1&subid='+subid
     }).then(function(response) {
         if (response.status >= 200 && response.status < 300) return response;
         throw new Error(response.statusText)
     }).then(function(response) {
-        return response.json()
+        return response.json();
     }).then(function(json) {
+        var pushButton = document.querySelector('.gcm-push-button');
+        pushButton.style.display = 'none';
+        if (document.querySelector('#did' + json.result.deviceid) == null) {
+            console.log('#did' + json.result.deviceid);
+            console.log(document.querySelector('#did' + json.result.deviceid));
+            pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.deviceid + '" class="current">' + json.result.device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.deviceid + '\')">remove</a>)</div>');
+        }
         console.log('Register succeeded with json response: ', json)
     }).catch(function(error) {
         console.log('Register failed:', error)
     })
 }
 
-function revokeSubscriptionFromServer(subscription) {
+function revokeSubscriptionFromServer(subid, deviceid) {
     fetch(ENDPOINT, {
         credentials: 'include',
         method: 'post',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'revoke=1'
+        body: 'revoke=1&subid='+subid,
     }).then(function(response) {
         if (response.status >= 200 && response.status < 300) return response;
         throw new Error(response.statusText)
     }).then(function(response) {
         return response.json()
     }).then(function(json) {
+        var dev = document.querySelector('#did' + deviceid);
+        console.log(deviceid);
+        console.log(dev);
+        if (dev) {
+            if (dev.getAttribute('class') == 'current') {
+                // Current device was removed so remove it from the list and enable
+                // the subscription button.
+                document.querySelector('.gcm-push-button').style.display = 'block';
+            }
+            dev.remove();
+        }
         console.log('Revoke succeeded with json response: ', json)
     }).catch(function(error) {
         console.log('Revoke failed:', error)

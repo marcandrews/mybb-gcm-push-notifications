@@ -1,13 +1,13 @@
 {  
-  "name": "name",  
-  "short_name": "short_name",  
+  "name": "MyBB Dev Forum",  
+  "short_name": "MyBB Dev Forum",  
   "icons": [{  
         "src": "images/icon-192x192.png",  
         "sizes": "192x192",
         "type": "image/png" 
       }],  
-  "start_url": "index.php",  
+  "start_url": "/dev",  
   "display": "standalone",  
-  "gcm_sender_id": "gcm_sender_id",  
+  "gcm_sender_id": "506914853858",  
   "gcm_user_visible_only": true  
 }

@@ -6,7 +6,7 @@ if(!defined("IN_MYBB"))
     die("Direct initialization of this file is not allowed.");
 }
 
-define("GOOGLE_API_KEY", "GOOGLE_API_KEY");   
+define("GOOGLE_API_KEY", "AIzaSyBQIz34fFHeAdQaxcMiASii6SVF6p3d3kQ");   
 
 function gcm_push_notifications_plugin_info()
 {
@@ -23,6 +23,7 @@ function gcm_push_notifications_plugin_info()
     );
 }
 
+
 function gcm_push_notifications_plugin_install()
 {
     global $db;
@@ -32,10 +33,12 @@ function gcm_push_notifications_plugin_install()
             "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX."gcm` (
                 `id` int(11) NOT NULL AUTO_INCREMENT,
                 `uid` int(50) NOT NULL,
-                `regid` varchar(256) DEFAULT NULL,
+                `device` varchar(16) NOT NULL,
+                `deviceid` varchar(32) NOT NULL,
+                `subid` varchar(256) DEFAULT NULL,
                 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`id`),
-                UNIQUE KEY `UNIQUE_uid` (`uid`)
+                UNIQUE KEY `UNIQUE_uid` (`uid`,`deviceid`)
             ) ENGINE=MyISAM{$collation};"
         );
     }
@@ -54,7 +57,7 @@ function gcm_push_notifications_plugin_is_installed()
 
 function gcm_push_notifications_plugin_uninstall()
 {
-
+    $db->write_query("DROP TABLE IF EXISTS `".TABLE_PREFIX."gcm`");
 }
 
 function gcm_push_notifications_plugin_activate()
@@ -75,14 +78,14 @@ function gcm_push_notifications_push()
     $date = date('c');
     $log = "--- start push {$date} ---".PHP_EOL;
     
-    $sql = "SELECT s.uid, g.regid FROM mybb_threadsubscriptions s, mybb_gcm g WHERE s.uid = g.uid AND s.uid != {$mybb->user['uid']} AND s.tid = {$post['tid']}";
+    $sql = "SELECT s.uid, g.subid FROM mybb_threadsubscriptions s, mybb_gcm g WHERE s.uid = g.uid AND s.uid != {$mybb->user['uid']} AND s.tid = {$post['tid']}";
     $log .= "SQL:".preg_replace('/\s+/m', ' ', $sql).PHP_EOL;
     
     $query = $db->write_query($sql);
     
     $users = array();
     while ($user = $db->fetch_array($query)) {
-        if (!empty($user['regid'])) $users[] = $user['regid'];
+        if (!empty($user['subid'])) $users[] = $user['subid'];
     }
     $log .= "Number of subscribers: ".count($users).PHP_EOL;  
     
