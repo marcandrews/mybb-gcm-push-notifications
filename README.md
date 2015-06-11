@@ -30,8 +30,8 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
    - add your 2:`name`, 3:`short_name` and 11:`gcm_sender_id` (from 1.ii)
 
  3. Update service-worker.js
-   - add your-forum-name to 24,58:`tag`
-   - add Your Forum Name to 62,66,72:`title`
+   - add your-forum-name to 24,65:`tag`
+   - add Your Forum Name to 62:`title`
 
  4. Update gcm_push_notifications_plugin.php
    - define your Google API Key at 9:`GOOGLE_API_KEY` (from 1.iv)
