@@ -34,8 +34,8 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
    - add your-forum-name to [24](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L24),[65](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L65):`tag`
    - add Your Forum Name to [62](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L62):`title`
 
- 4. Update [gcm_push_notifications_plugin.php](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/gcm_push_notifications.php)
-   - define your Google API Key at [9](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/gcm_push_notifications.php#L9):`GOOGLE_API_KEY` (from 1.iv)
+ 4. Update [gcm_push_notifications_plugin.php](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/inc/plugins/gcm_push_notifications_plugin.php)
+   - define your Google API Key at [9](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/inc/plugins/gcm_push_notifications_plugin.php#L9):`GOOGLE_API_KEY` (from 1.iv)
 
  5. Make sure gcm_push_notifications_plugin.log is writable
 
