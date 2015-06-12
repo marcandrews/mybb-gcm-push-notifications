@@ -8,11 +8,25 @@ if(!defined("IN_MYBB"))
 
 define("GOOGLE_API_KEY", "AIzaSyBQIz34fFHeAdQaxcMiASii6SVF6p3d3kQ");   
 
+define("GCM_FILES", serialize(
+    array (
+        'images/icon-192x192.png',
+        'inc/gcm_push_notifications',
+        'inc/plugins/gcm_push_notifications_plugin.php',
+        'inc/plugins/gcm_push_notifications_plugin.log',
+        'jscripts/gcm_push_notifications.js',
+        'gcm_push_notifications.php',
+        'IndexDBWrapper.js',
+        'manifest.json',
+        'service-worker.js'
+    )
+));
+
 function gcm_push_notifications_plugin_info()
 {
     return array(
         "name"          => "GCM Push Notifications",
-        "description"   => "Sends GCM push notifications for new posts",
+        "description"   => "Push notifications to Chrome/Android/iOS",
         "website"       => "http://github.com/marcandrews/",
         "author"        => "Marc Andrews",
         "authorsite"    => "http://github.com/marcandrews/",
@@ -28,6 +42,7 @@ function gcm_push_notifications_plugin_install()
 {
     global $db;
     
+    $collation = $db->build_create_table_collation();
     if (!$db->table_exists('gcm')) {
         $db->write_query(
             "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX."gcm` (
@@ -48,26 +63,49 @@ function gcm_push_notifications_plugin_install()
 function gcm_push_notifications_plugin_is_installed()
 {
     global $db;
-    if($db->table_exists("gcm"))
-    {
-        return true;
+    
+    // check files
+    $files = unserialize(GCM_FILES);
+    foreach ($files as $file) {
+        if (!file_exists('../'.$file)) return false;
     }
-    return false;
+    
+    // check db
+    if (!$db->table_exists("gcm")) return false;
+    
+    return true;
 }
 
 function gcm_push_notifications_plugin_uninstall()
-{
+{    
     $db->write_query("DROP TABLE IF EXISTS `".TABLE_PREFIX."gcm`");
 }
 
 function gcm_push_notifications_plugin_activate()
 {
-
+    require_once MYBB_ROOT . "/inc/adminfunctions_templates.php";
+    find_replace_templatesets(
+        'usercp_options',
+        "#" . preg_quote('{$headerinclude}') . "#i",
+        '{$headerinclude}
+<script type="text/javascript" src="jscripts/gcm_push_notifications.js"></script>
+<link rel="manifest" href="manifest.json">'
+    );
 }
 
 function gcm_push_notifications_plugin_deactivate()
 {
-
+    require_once MYBB_ROOT . "/inc/adminfunctions_templates.php";
+    find_replace_templatesets(
+        'usercp_options',
+        "#" . preg_quote('<script type="text/javascript" src="jscripts/gcm_push_notifications.js"></script>') . "#i",
+        ''
+    );
+    find_replace_templatesets(
+        'usercp_options',
+        "#" . preg_quote('<link rel="manifest" href="manifest.json">') . "#i",
+        ''
+    );
 }
 
 $plugins->add_hook('datahandler_post_insert_post', 'gcm_push_notifications_push');

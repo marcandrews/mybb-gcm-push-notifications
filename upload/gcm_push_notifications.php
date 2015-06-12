@@ -84,6 +84,7 @@ if ($mybb->user['uid']) {
     
     // Return a subscriber's new threads and posts
     if (isset($_POST['notifications'])) {
+        // this SQL needs to be optimized
         $query = $db->write_query("
             SELECT      (SELECT COUNT(*) FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."threads t WHERE u.uid = r.uid AND r.tid = t.tid AND r.dateline < t.lastpost AND u.lastvisit < t.lastpost AND u.uid = 1) AS unread_t,
                         (SELECT COUNT(*) FROM ".TABLE_PREFIX."posts p WHERE p.tid = t.tid and p.dateline > r.dateline) AS unread_p,
