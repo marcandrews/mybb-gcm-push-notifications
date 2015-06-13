@@ -55,15 +55,18 @@ if ($mybb->user['uid']) {
     }
     
     
-    if (isset($_POST['register']) and !empty($_POST['subid'])) {
+    if ($mybb->get_input('register') and $mybb->get_input('subid')) {
         // Register a subscription
+        $subid_esc = $db->escape_string($mybb->get_input('subid'));
         $device = get_device();
+        $device_esc = $db->escape_string($device);
         if ($mybb->cookies['deviceid']) {
             $deviceid = $mybb->cookies['deviceid'];
         } else {
             $deviceid = md5($mybb->user['uid'].$device.uniqid(rand(), true));
         }
-        $sql = "INSERT INTO ".TABLE_PREFIX."gcm (uid, device, deviceid, subid) VALUES ({$mybb->user['uid']}, '{$device}', '{$deviceid}', '{$_POST['subid']}') ON DUPLICATE KEY UPDATE subid = '{$_POST['subid']}'";
+        $deviceid_esc = $db->escape_string($deviceid);
+        $sql = "INSERT INTO ".TABLE_PREFIX."gcm (uid, device, deviceid, subid) VALUES ({$mybb->user['uid']}, '{$device_esc}', '{$deviceid_esc}', '{$subid_esc}') ON DUPLICATE KEY UPDATE subid = '{$subid_esc}'";
         $output['success'] = $db->write_query($sql);
         $output['sql'] = $sql;
         if ($output['success']) my_setcookie('deviceid', $deviceid);
@@ -73,7 +76,7 @@ if ($mybb->user['uid']) {
         exit;
     }    
     
-    if (isset($_POST['revoke']) and !empty($_POST['subid'])) {
+    if ($mybb->get_input('revoke') and $mybb->get_input('subid')) {
         // Revoke a subscription
         $output['sql'] = "DELETE FROM ".TABLE_PREFIX."gcm WHERE uid = {$mybb->user['uid']} AND subid = '{$_POST['subid']}'";
         $output['success'] = $db->write_query($output['sql']);
@@ -83,7 +86,7 @@ if ($mybb->user['uid']) {
     }
     
     // Return a subscriber's new threads and posts
-    if (isset($_POST['notifications'])) {
+    if ($mybb->get_input('notifications')) {
         // this SQL needs to be optimized
         $query = $db->write_query("
             SELECT      (SELECT COUNT(*) FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."threads t WHERE u.uid = r.uid AND r.tid = t.tid AND r.dateline < t.lastpost AND u.lastvisit < t.lastpost AND u.uid = 1) AS unread_t,
