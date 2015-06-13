@@ -24,7 +24,7 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
     2. Near the top of the screen your Google Sender ID is your Project ID
     3. Under APIs & auth > Credentials, create a new key
     4. Your API key is your Google API key
- 2. [Download ZIP](https://github.com/marcandrews/gcm-push-notifications-for-mybb/archive/master.zip) and extract the contents of the upload folder to your MyBB forum's root
+ 2. [Download](https://github.com/marcandrews/gcm-push-notifications-for-mybb/releases) and extract the contents of the upload folder to your MyBB forum's root
  3. From your MyBB Admin CP
     1. Install and activate the GCM Push Notifications plugin
     2. Navigate to Configuration > Settings > GCM Push Notifications (under Plugin Settings)
