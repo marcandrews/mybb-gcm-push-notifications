@@ -70,15 +70,9 @@ function gcm_push_notifications_plugin_install()
     $gid = $db->insert_id();
 
     $settings = array(
-        'enable' => array(
-            'title'         => 'Enable GCM Push Notifications',
-            'description'   => "",
-            'optionscode'   => 'yesno',
-            'value'         => 1
-        ),
         'google_sender_id' => array(
             'title'         => 'Google Sender ID',
-            'description'   => "From your Google Developer Console, create a new project. Your Google Sender ID is your Project ID.",
+            'description'   => "From your Google Developer Console, create a new project, and this project's ID is your Google Sender ID.",
             'optionscode'   => 'text',
             'value'         => ''
         ),
@@ -116,6 +110,7 @@ function gcm_push_notifications_plugin_is_installed()
 {
     global $db;
 
+    // Check HTTPS
     if ((empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'off') || intval($_SERVER['SERVER_PORT']) !== 443) 
     {
         echo '<div class="alert">GCM Push Notifications requires MyBB to be hosted over HTTPS.</div>';
@@ -128,14 +123,13 @@ function gcm_push_notifications_plugin_is_installed()
     {
         if (!file_exists('../'.$file)) $missing_files[] = $file;
     }
-    
     if (!empty($missing_files))
     {
         echo '<div class="alert">GCM Push Notifications is missing the following files:<br> '.implode('<br>', $missing_files).'</div>';
         return false;
     }
     
-    // Check db
+    // Check database
     $result = $db->simple_select('settinggroups', 'gid', "name = 'gcm_push_notifications'", array('limit' => 1));
     $group = $db->fetch_array($result);
     return !empty($group['gid']) && $db->table_exists('gcm');
@@ -158,6 +152,8 @@ function gcm_push_notifications_plugin_uninstall()
     }
     
     // Remove gcm table
+    // Until the plugin leaves pre-release, the gcm table will be left, so that
+    // it is easier to reinstall without losing user/device registration.
     // $db->write_query("DROP TABLE IF EXISTS `".TABLE_PREFIX."gcm`");
 }
 
@@ -190,11 +186,16 @@ $plugins->add_hook('datahandler_post_insert_post', 'gcm_push_notifications_push'
 function gcm_push_notifications_push()
 {
     global $db, $mybb, $post;
-    
-    if ($mybb->settings['gcm_push_notifications_enable'] == 0) return false;
-    
+
     $date = date('c');
-    $log = "--- start push {$date} ---".PHP_EOL;
+    $log = "--- start push {$date} ---".PHP_EOL;    
+    
+    if (empty($mybb->settings['gcm_push_notifications_google_sender_id']) or empty($mybb->settings['gcm_push_notifications_google_api_key'])) {
+        $log .= "Error: no sender ID or API key specified".PHP_EOL;
+        $log .= "--- end push {$date} ---".PHP_EOL.PHP_EOL;
+        @file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
+        return false;
+    }
     
     $sql = "SELECT s.uid, g.subid FROM mybb_threadsubscriptions s, ".TABLE_PREFIX."gcm g WHERE s.uid = g.uid AND s.uid != {$mybb->user['uid']} AND s.tid = {$post['tid']}";
     $log .= "SQL:".preg_replace('/\s+/m', ' ', $sql).PHP_EOL;
