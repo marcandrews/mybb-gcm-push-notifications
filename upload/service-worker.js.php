@@ -1,3 +1,16 @@
+<?php
+header('Content-Type: application/javascript');
+
+define("IN_MYBB", 1);
+require "global.php"; 
+
+function clean($string) {
+    $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
+    $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
+    $string = strtolower($string);
+    return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
+}
+?>
 'use strict';
 
 var ENDPOINT = 'gcm_push_notifications.php';
@@ -21,7 +34,7 @@ function showNotification(title, body, silent, icon, tag, data) {
         body: body,
         icon: icon ? icon : 'images/icon-192x192.png',
         silent: silent ? silent : false,
-        tag: tag ? tag : 'mybb-dev-forum',
+        tag: tag ? tag : '<?= clean($mybb->settings['bbname']) ?>',
         data: data
     };
     if (self.registration.showNotification) {
@@ -62,7 +75,7 @@ self.addEventListener('push', function (event) {
             var title = 'MyBB Dev Forum',
                 message,
                 urlToOpen,
-                notificationTag = 'mybb-dev-forum',
+                notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
                 silent = false;
             if (json.unread_t == 1) {
                 if (json.unread_p == 1) {

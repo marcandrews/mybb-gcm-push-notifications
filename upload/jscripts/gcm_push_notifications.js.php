@@ -1,8 +1,14 @@
+<?php
+header('Content-Type: application/javascript');
+
+define("IN_MYBB", 1);
+require "../global.php";
+?>
 var ENDPOINT = 'gcm_push_notifications.php';
 var isEnabled = false;
 
 function getCookie(cname) {
-    var name = 'dev_' + cname + '=';
+    var name = '<?= $mybb->settings['cookieprefix'] ?>' + cname + '=';
     var ca = document.cookie.split(';');
     for(var i=0; i<ca.length; i++) {
         var c = ca[i];
@@ -28,7 +34,7 @@ window.addEventListener('load', function () {
     // Check that service workers are supported, if so, progressively  
     // enhance and add push messaging support, otherwise continue without it.  
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
+        navigator.serviceWorker.register('service-worker.js.php')
             .then(initialiseState);
     } else {
         console.warn('Service workers aren\'t supported in this browser.');
