@@ -24,22 +24,12 @@ This plugin for MyBB pushes notifications via Google Cloud Messaging to Chrome a
     2. Near the top of the screen your Google Sender ID is your Project ID
     3. Under APIs & auth > Credentials, create a new key
     4. Your API key is your Google API key
-
- 1. [Download ZIP](https://github.com/marcandrews/gcm-push-notifications-for-mybb/archive/master.zip) and extract the contents of the upload folder to your forum's root
-
- 2. Update [manifest.json](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/manifest.json)
-   - add your [2](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/manifest.json#L2):`name`, [3](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/manifest.json#L3):`short_name` and [11](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/manifest.json#L11):`gcm_sender_id` (from 1.ii)
-
- 3. Update [service-worker.js](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js)
-   - add your-forum-name to [24](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L24),[65](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L65):`tag`
-   - add Your Forum Name to [62](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/service-worker.js#L62):`title`
-
- 4. Update [gcm_push_notifications_plugin.php](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/inc/plugins/gcm_push_notifications_plugin.php)
-   - define your Google API Key at [9](https://github.com/marcandrews/gcm-push-notifications-for-mybb/blob/master/upload/inc/plugins/gcm_push_notifications_plugin.php#L9):`GOOGLE_API_KEY` (from 1.iv)
-
- 5. Make sure gcm_push_notifications_plugin.log is writable
-
- 6. Activate the plugin from your MyBB Admin CP
+ 2. [Download ZIP](https://github.com/marcandrews/gcm-push-notifications-for-mybb/archive/master.zip) and extract the contents of the upload folder to your forum's root
+ 3. From your MyBB Admin CP
+    1. Activate the plugin
+    2. Navigate to Configuration > Settings > GCM Push Notifications (under Plugin Settings)
+       1. Input your Google Sender ID (from 1.ii)
+       2. Input your Google API key (from 1.iv)
 
 
 ## Screenshots
