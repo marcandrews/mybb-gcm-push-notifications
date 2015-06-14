@@ -37,7 +37,7 @@ require "global.php";
 global $db;
 
 if ($mybb->user['uid']) {
-    if (isset($_POST['devices'])) {
+    if ($mybb->get_input('devices')) {
         $sql = "SELECT * FROM ".TABLE_PREFIX."gcm WHERE uid = {$mybb->user['uid']}";
         $query = $db->write_query($sql);
         $output['success'] = $query;
@@ -78,7 +78,8 @@ if ($mybb->user['uid']) {
     
     if ($mybb->get_input('revoke') and $mybb->get_input('subid')) {
         // Revoke a subscription
-        $output['sql'] = "DELETE FROM ".TABLE_PREFIX."gcm WHERE uid = {$mybb->user['uid']} AND subid = '{$_POST['subid']}'";
+        $subid_esc = $db->escape_string($mybb->get_input('subid'));
+        $output['sql'] = "DELETE FROM ".TABLE_PREFIX."gcm WHERE uid = {$mybb->user['uid']} AND subid = '{$subid_esc}'";
         $output['success'] = $db->write_query($output['sql']);
         if ($output['success']) my_setcookie('deviceid', "");
         print json_encode($output);
