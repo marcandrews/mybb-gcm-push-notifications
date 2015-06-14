@@ -7,17 +7,6 @@ require "../global.php";
 var ENDPOINT = 'gcm_push_notifications.php';
 var isEnabled = false;
 
-function getCookie(cname) {
-    var name = '<?= $mybb->settings['cookieprefix'] ?>' + cname + '=';
-    var ca = document.cookie.split(';');
-    for(var i=0; i<ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1);
-        if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
-    }
-    return "";
-}
-
 window.addEventListener('load', function () {
     // Add button to Edit Settings User CP page
     var referenceNode = document.getElementById('subscriptionmethod');
@@ -230,8 +219,8 @@ function registerSubscriptionToServer(subid) {
         var pushButton = document.querySelector('.gcm-push-button');
         pushButton.style.display = 'none';
         if (document.querySelector('#did' + json.result.deviceid) == null) {
-            console.log('#did' + json.result.deviceid);
-            console.log(document.querySelector('#did' + json.result.deviceid));
+            // console.log('#did' + json.result.deviceid);
+            // console.log(document.querySelector('#did' + json.result.deviceid));
             pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.deviceid + '" class="current">' + json.result.device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.deviceid + '\')">remove</a>)</div>');
         }
         console.log('Register succeeded with json response: ', json)
@@ -253,12 +242,10 @@ function revokeSubscriptionFromServer(subid, deviceid) {
         return response.json()
     }).then(function(json) {
         var dev = document.querySelector('#did' + deviceid);
-        console.log(deviceid);
-        console.log(dev);
         if (dev) {
             if (dev.getAttribute('class') == 'current') {
-                // Current device was removed so remove it from the list and enable
-                // the subscription button.
+                // Current device was removed so re-enable the subscription
+                // button.
                 document.querySelector('.gcm-push-button').style.display = 'block';
             }
             dev.remove();
