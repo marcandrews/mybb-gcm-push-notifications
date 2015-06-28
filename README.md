@@ -45,6 +45,6 @@ Uninstall from you Admin CP, and then manually remove the gcm table from your da
 ## Screenshots
 
 ### Android
-<img src=assets/i/android.png width=360 height=640 />
+<img src=.assets/i/android.png width=360 height=640 />
 ### Desktop
-<img src=assets/i/desktop.png />
+<img src=.assets/i/desktop.png />
