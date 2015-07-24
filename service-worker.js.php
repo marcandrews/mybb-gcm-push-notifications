@@ -76,30 +76,32 @@ self.addEventListener('push', function (event) {
             // console.log('Parsed json:', json);
 
             if (json) {
-                var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
-                    message,
-                    urlToOpen,
-                    notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
-                    silent = false;
-                if (json.result.unread_threads == 1) {
-                    if (json.result.unread_posts == 1) {
-                        message = 'New post in ' + json.result.subject + ' from ' + json.result.username + '.';
+                if (json.result.unread_threads > 0) {
+                    var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
+                        message,
+                        urlToOpen,
+                        notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
+                        silent = false;
+                    if (json.result.unread_threads == 1) {
+                        if (json.result.unread_posts == 1) {
+                            message = 'New post in ' + json.result.subject + ' from ' + json.result.username + '.';
+                        } else {
+                            message = json.result.unread_posts + ' new posts in ' + json.result.subject;
+                            silent = true;
+                        }
+                        urlToOpen = 'showthread.php?tid=' + json.result.tid + '&action=newpost';
                     } else {
-                        message = json.result.unread_posts + ' new posts in ' + json.result.subject;
+                        message = json.result.unread_threads + ' of your threads have new posts.';
                         silent = true;
-                    }
-                    urlToOpen = 'showthread.php?tid=' + json.result.tid + '&action=newpost';
-                } else {
-                    message = json.result.unread_threads + ' of your threads have new posts.';
-                    silent = true;
-                    urlToOpen = 'search.php?action=getnew';
-                }                
-                if (!Notification.prototype.hasOwnProperty('data')) {
-                    // Since Chrome doesn't support data at the moment
-                    // Store the URL in IndexDB
-                    getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
-                }                
-                return showNotification(title, message, silent, null, notificationTag);
+                        urlToOpen = 'search.php?action=getnew';
+                    }                
+                    if (!Notification.prototype.hasOwnProperty('data')) {
+                        // Since Chrome doesn't support data at the moment
+                        // Store the URL in IndexDB
+                        getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
+                    }                
+                    return showNotification(title, message, silent, null, notificationTag);
+                }
             } else {
                 console.log('No new messages');
             }
