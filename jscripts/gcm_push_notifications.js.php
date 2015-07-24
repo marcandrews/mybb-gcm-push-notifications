@@ -5,7 +5,7 @@ define("IN_MYBB", 1);
 define("NO_ONLINE", 1);
 require "../global.php";
 ?>
-var ENDPOINT = 'gcm_push_notifications.php';
+var ENDPOINT = 'xmlhttp.php';
 var isEnabled = false;
 
 window.addEventListener('load', function () {
@@ -88,7 +88,7 @@ function initialiseState() {
         credentials: 'include',
         method: 'post',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'devices=1'
+        body: 'action=gcm_devices'
     }).then(function(response) {
         if (response.status !== 200) {
             console.log('Looks like there was a problem. Status Code: ' + response.status);
@@ -112,8 +112,6 @@ function initialiseState() {
         } else {
             console.log('No registered devices found');
         }
-    }).catch(function(ex) {
-        console.log('parsing failed', ex);
     }).catch(function(err) {
         console.error('Unable to retrieve data', err);
     })
@@ -210,7 +208,7 @@ function registerSubscriptionToServer(subid) {
         credentials: 'include',
         method: 'post',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'register=1&subid='+subid
+        body: 'action=gcm_register&gcm_subid='+subid
     }).then(function(response) {
         if (response.status >= 200 && response.status < 300) return response;
         throw new Error(response.statusText)
@@ -220,8 +218,6 @@ function registerSubscriptionToServer(subid) {
         var pushButton = document.querySelector('.gcm-push-button');
         pushButton.style.display = 'none';
         if (document.querySelector('#did' + json.result.deviceid) == null) {
-            // console.log('#did' + json.result.deviceid);
-            // console.log(document.querySelector('#did' + json.result.deviceid));
             pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.deviceid + '" class="current">' + json.result.device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.deviceid + '\')">remove</a>)</div>');
         }
         console.log('Register succeeded with json response: ', json)
@@ -235,7 +231,7 @@ function revokeSubscriptionFromServer(subid, deviceid) {
         credentials: 'include',
         method: 'post',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'revoke=1&subid='+subid,
+        body: 'action=gcm_revoke&gcm_subid='+subid,
     }).then(function(response) {
         if (response.status >= 200 && response.status < 300) return response;
         throw new Error(response.statusText)

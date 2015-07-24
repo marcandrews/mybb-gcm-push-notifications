@@ -14,7 +14,7 @@ function clean($string) {
 ?>
 'use strict';
 
-var ENDPOINT = 'gcm_push_notifications.php';
+var ENDPOINT = 'xmlhttp.php';
 
 importScripts('IndexDBWrapper.js');
 var KEY_VALUE_STORE_NAME = 'key-value-store';
@@ -46,14 +46,12 @@ function showNotification(title, body, silent, icon, tag, data) {
     }
 }
 
-/*
 self.addEventListener('install', function (event) {
     // Perform install steps
     if (self.skipWaiting) {
         self.skipWaiting();
     }
 });
-*/
 
 self.addEventListener('push', function (event) {
     // console.log(ENDPOINT);
@@ -64,7 +62,7 @@ self.addEventListener('push', function (event) {
             credentials: 'include',
             method: 'post',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-            body: 'notifications=1'
+            body: 'action=gcm_notifications'
         }).then(function (response) {
             if (response.status !== 200) {
                 console.log('Looks like there was a problem. Status Code: ' + response.status);
@@ -94,7 +92,7 @@ self.addEventListener('push', function (event) {
                         message = json.result.unread_threads + ' of your threads have new posts.';
                         silent = true;
                         urlToOpen = 'search.php?action=getnew';
-                    }                
+                    }
                     if (!Notification.prototype.hasOwnProperty('data')) {
                         // Since Chrome doesn't support data at the moment
                         // Store the URL in IndexDB
