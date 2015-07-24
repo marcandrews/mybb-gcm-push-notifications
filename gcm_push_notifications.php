@@ -75,29 +75,15 @@ if ($mybb->user['uid']) {
     
     if ($mybb->get_input('notifications')) {
         // Return a subscriber's new threads and posts
-        // this SQL needs to be optimized
-        $query = $db->write_query("
-            SELECT      (SELECT COUNT(*) FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."threads t WHERE u.uid = r.uid AND r.tid = t.tid AND r.dateline < t.lastpost AND u.lastvisit < t.lastpost AND u.uid = 1) AS unread_t,
-                        (SELECT COUNT(*) FROM ".TABLE_PREFIX."posts p WHERE p.tid = t.tid and p.dateline > r.dateline) AS unread_p,
-                        s.tid lasttid, t.subject lastsubject, t.lastposter, r.dateline lastread, t.lastpost
-            FROM        (".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsubscriptions s, ".TABLE_PREFIX."threads t)
-            LEFT JOIN   ".TABLE_PREFIX."threadsread r ON s.tid = r.tid AND s.uid = r.uid
-            WHERE       u.uid = s.uid AND
-                        s.tid = t.tid AND
-                        t.visible = 1 AND
-                        r.dateline < t.lastpost AND
-                        u.lastvisit < t.lastpost AND
-                        u.uid = {$mybb->user['uid']}
-            ORDER BY    t.lastpost DESC
-            LIMIT       1
-        ");
-
-        if ($db->num_rows($query)) {
-            $threads = $db->fetch_array($query);
+        $output['sql'] = "SELECT s.tid, t.subject, p.pid, p.username, COUNT(DISTINCT s.tid) as unread_threads, COUNT(DISTINCT p.pid) as unread_posts FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsubscriptions s, ".TABLE_PREFIX."threads t, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."posts p WHERE u.uid = s.uid AND s.tid = t.tid AND u.uid = r.uid AND t.tid = r.tid AND t.tid = p.tid AND p.dateline > r.dateline AND u.lastvisit < t.lastpost AND s.uid = {$mybb->user['uid']} ORDER BY p.dateline DESC";
+        $output['success'] = $db->write_query($output['sql']);
+        
+        if ($output['success']) {
+            $output['result'] = $db->fetch_array($output['success']);
         } else {
-            $threads = false;
+            $output['result'] = false;
         }
-        print json_encode($threads, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
+        print json_encode($output, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
         exit;
     }
 }
