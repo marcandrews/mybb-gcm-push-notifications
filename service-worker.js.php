@@ -46,66 +46,69 @@ function showNotification(title, body, silent, icon, tag, data) {
     }
 }
 
+/*
 self.addEventListener('install', function (event) {
     // Perform install steps
     if (self.skipWaiting) {
         self.skipWaiting();
     }
 });
+*/
 
 self.addEventListener('push', function (event) {
     // console.log(ENDPOINT);
     console.log('Received a push message', event);
 
-    fetch(ENDPOINT, {
-        credentials: 'include',
-        method: 'post',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'notifications=1'
-    }).then(function (response) {
-        if (response.status !== 200) {
-            console.log('Looks like there was a problem. Status Code: ' + response.status);
-            // Throw an error so the promise is rejected and catch() is executed
-            throw new Error();
-        }
-        return response.json();
-    }).then(function (json) {
-        // console.log('Parsed json:', json);
+    event.waitUntil(
+        fetch(ENDPOINT, {
+            credentials: 'include',
+            method: 'post',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+            body: 'notifications=1'
+        }).then(function (response) {
+            if (response.status !== 200) {
+                console.log('Looks like there was a problem. Status Code: ' + response.status);
+                // Throw an error so the promise is rejected and catch() is executed
+                throw new Error();
+            }
+            return response.json();
+        }).then(function (json) {
+            // console.log('Parsed json:', json);
 
-        if (json) {
-            var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
-                message,
-                urlToOpen,
-                notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
-                silent = false;
-            if (json.unread_t == 1) {
-                if (json.unread_p == 1) {
-                    message = 'New post in ' + json.lastsubject + ' from ' + json.lastposter + '.';
-                    urlToOpen = 'thread-' + json.lasttid +'-newpost.html';
+            if (json) {
+                var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
+                    message,
+                    urlToOpen,
+                    notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
+                    silent = false;
+                if (json.result.unread_threads == 1) {
+                    if (json.result.unread_posts == 1) {
+                        message = 'New post in ' + json.result.subject + ' from ' + json.result.username + '.';
+                    } else {
+                        message = json.result.unread_posts + ' new posts in ' + json.result.subject;
+                        silent = true;
+                    }
+                    urlToOpen = 'showthread.php?tid=' + json.result.tid + '&action=newpost';
                 } else {
-                    message = json.unread_p + ' new posts in ' + json.lastsubject;
+                    message = json.result.unread_threads + ' of your threads have new posts.';
                     silent = true;
-                    urlToOpen = 'thread-' + json.lasttid + '-newpost.html';
-                }
+                    urlToOpen = 'search.php?action=getnew';
+                }                
+                if (!Notification.prototype.hasOwnProperty('data')) {
+                    // Since Chrome doesn't support data at the moment
+                    // Store the URL in IndexDB
+                    getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
+                }                
+                return showNotification(title, message, silent, null, notificationTag);
             } else {
-                message = json.unread_t + ' of your threads have new posts.';
-                silent = true;
-                urlToOpen = 'search.php?action=getnew';
-            }                
-            if (!Notification.prototype.hasOwnProperty('data')) {
-                // Since Chrome doesn't support data at the moment
-                // Store the URL in IndexDB
-                getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
-            }                
-            return showNotification(title, message, silent, null, notificationTag);
-        } else {
-            console.log('No new messages');
-        }
-    }).catch(function (ex) {
-        console.log('parsing failed', ex);
-    }).catch(function (err) {
-        console.error('Unable to retrieve data', err);
-    });
+                console.log('No new messages');
+            }
+        }).catch(function (ex) {
+            console.log('parsing failed', ex);
+        }).catch(function (err) {
+            console.error('Unable to retrieve data', err);
+        })
+    );
 });
 
 self.addEventListener('notificationclick', function (event) {
