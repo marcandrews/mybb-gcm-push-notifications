@@ -11,15 +11,17 @@ var isEnabled = false;
 window.addEventListener('load', function () {
     // Add button to Edit Settings User CP page
     var referenceNode = document.getElementById('subscriptionmethod');
-    referenceNode.insertAdjacentHTML('afterend', '<div><br><strong>GCM Push Notifications</strong></div><button type="button" class="gcm-push-button" style="display:block">Enable GCM Push Notifciations</button>');
-    var pushButton = document.querySelector('.gcm-push-button');
-    pushButton.addEventListener('click', function () {
-        if (isEnabled) {
-            unsubscribe();
-        } else {
-            subscribe();
-        }
-    });
+	if (referenceNode !== null) {
+		referenceNode.insertAdjacentHTML('afterend', '<div><br><strong>GCM Push Notifications</strong></div><button type="button" class="gcm-push-button" style="display:block">Enable GCM Push Notifciations</button>');
+		var pushButton = document.querySelector('.gcm-push-button');
+		pushButton.addEventListener('click', function () {
+			if (isEnabled) {
+				unsubscribe();
+			} else {
+				subscribe();
+			}
+		});
+	}
 
     // Check that service workers are supported, if so, progressively  
     // enhance and add push messaging support, otherwise continue without it.  
@@ -61,7 +63,7 @@ function initialiseState() {
                 // Enable any UI which subscribes / unsubscribes from  
                 // push messages.  
                 var pushButton = document.querySelector('.gcm-push-button');
-                pushButton.disabled = false;
+                if (pushButton !== null) pushButton.disabled = false;
 
                 if (!subscription) {
                     // We aren't subscribed to push, so set UI  
@@ -76,7 +78,7 @@ function initialiseState() {
 
                 // Set your UI to show they have subscribed for  
                 // push messages  
-                pushButton.textContent = 'Disable GCM Push Notifciations';
+                if (pushButton !== null) pushButton.textContent = 'Disable GCM Push Notifciations';
                 isEnabled = true;
             })
             .catch(function(err) {
@@ -85,37 +87,39 @@ function initialiseState() {
     });
     
     // Retrieve a list of registered devices
-    fetch(ENDPOINT, {
-        credentials: 'include',
-        method: 'post',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: 'action=gcm_devices'
-    }).then(function(response) {
-        if (response.status !== 200) {
-            console.log('Looks like there was a problem. Status Code: ' + response.status);
-            // Throw an error so the promise is rejected and catch() is executed
-            throw new Error();
-        }
-        return response.json();
-    }).then(function(json) {
-        console.log('Parsed json:', json.result.devices);
-        if (json) {
-            var pushButton = document.querySelector('.gcm-push-button');
-            var n = Object.keys(json.result.devices).length;
-            for (i = 0; i < n; i++) { 
-                if (typeof subscriptionId !== 'undefined' && json.result.devices[i].subid == subscriptionId) {
-                    pushButton.style.display = 'none';
-                    pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.devices[i].deviceid + '" class="current">' + json.result.devices[i].device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
-                } else {
-                    pushButton.insertAdjacentHTML('afterend', '<div id="did'+json.result.devices[i].deviceid+'">'+json.result.devices[i].device+' (<a href="#!" onClick="revokeSubscriptionFromServer(\'' + json.result.devices[i].subscriptionId + '\',\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
-                }
-            }
-        } else {
-            console.log('No registered devices found');
-        }
-    }).catch(function(err) {
-        console.error('Unable to retrieve data', err);
-    })
+	var pushButton = document.querySelector('.gcm-push-button');
+	if (pushButton !== null) {
+		fetch(ENDPOINT, {
+			credentials: 'include',
+			method: 'post',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: 'action=gcm_devices'
+		}).then(function(response) {
+			if (response.status !== 200) {
+				console.log('Looks like there was a problem. Status Code: ' + response.status);
+				// Throw an error so the promise is rejected and catch() is executed
+				throw new Error();
+			}
+			return response.json();
+		}).then(function(json) {
+			console.log('Parsed json:', json.result.devices);
+			if (json) {
+				var n = Object.keys(json.result.devices).length;
+				for (i = 0; i < n; i++) { 
+					if (typeof subscriptionId !== 'undefined' && json.result.devices[i].subid == subscriptionId) {
+						pushButton.style.display = 'none';
+						pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.devices[i].deviceid + '" class="current">' + json.result.devices[i].device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
+					} else {
+						pushButton.insertAdjacentHTML('afterend', '<div id="did'+json.result.devices[i].deviceid+'">'+json.result.devices[i].device+' (<a href="#!" onClick="revokeSubscriptionFromServer(\'' + json.result.devices[i].subscriptionId + '\',\'' + json.result.devices[i].deviceid + '\')">remove</a>)</div>');
+					}
+				}
+			} else {
+				console.log('No registered devices found');
+			}
+		}).catch(function(err) {
+			console.error('Unable to retrieve data', err);
+		});
+	}
     
 }
 
@@ -221,11 +225,13 @@ function registerSubscriptionToServer(subid) {
         return response.json();
     }).then(function(json) {
         var pushButton = document.querySelector('.gcm-push-button');
-        pushButton.style.display = 'none';
-        if (document.querySelector('#did' + json.result.deviceid) == null) {
-            pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.deviceid + '" class="current">' + json.result.device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.deviceid + '\')">remove</a>)</div>');
-        }
-        console.log('Register succeeded with json response: ', json)
+        if (pushButton !== null) {
+			pushButton.style.display = 'none';
+			if (document.querySelector('#did' + json.result.deviceid) == null) {
+				pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.deviceid + '" class="current">' + json.result.device + ' <strong>(current)</strong> (<a href="#!" onClick="unsubscribe(\'' + json.result.deviceid + '\')">remove</a>)</div>');
+			}
+		}
+		console.log('Register succeeded with json response: ', json)
     }).catch(function(error) {
         console.log('Register failed:', error)
     })

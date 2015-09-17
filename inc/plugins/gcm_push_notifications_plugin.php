@@ -148,21 +148,24 @@ function gcm_push_notifications_plugin_uninstall() {
 
 
 function gcm_push_notifications_plugin_activate() {
-    require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-    find_replace_templatesets(
-        'usercp_options',
-        "#" . preg_quote('{$headerinclude}') . "#i",
-        '{$headerinclude}' . GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML
-    );
+
 }
 
 
 
 function gcm_push_notifications_plugin_deactivate() {
-    require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-    while (find_replace_templatesets('usercp_options', "#" . preg_quote(GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML) . "#i", '')) {
-        find_replace_templatesets('usercp_options', "#" . preg_quote(GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML) . "#i", '');
-    }
+
+}
+
+
+
+$plugins->add_hook('pre_output_page', 'gcm_push_notifications_global');
+function gcm_push_notifications_global($page) {
+	//global $mybb;
+	
+	//if (THIS_SCRIPT == 'usercp.php' and $mybb->input['action'] == 'options') {
+    	return str_replace('</head>', GCM_MANIFEST_HTML.PHP_EOL.GCM_JSCRIPT_HTML.PHP_EOL.'</head>', $page);
+	//}
 }
 
 
