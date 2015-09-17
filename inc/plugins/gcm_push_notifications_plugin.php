@@ -4,11 +4,9 @@ if (!defined("IN_MYBB")) die("Direct initialization of this file is not allowed.
 define("GCM_FILES", serialize(
     array (
         'images/icon-192x192.png',
-        'inc/gcm_push_notifications',
+        'inc/plugins/gcm_push_notifications',
         'inc/plugins/gcm_push_notifications_plugin.php',
-        'inc/plugins/gcm_push_notifications_plugin.log',
         'jscripts/gcm_push_notifications.js.php',
-        'gcm_push_notifications.php',
         'IndexDBWrapper.js',
         'manifest.json.php',
         'service-worker.js.php'
@@ -20,15 +18,14 @@ define("GCM_MANIFEST_HTML", '<link rel="manifest" href="manifest.json.php">');
 
 
 
-function gcm_push_notifications_plugin_info()
-{
+function gcm_push_notifications_plugin_info() {
     return array (
         "name"          => "GCM Push Notifications",
-        "description"   => "Push notifications to Chrome/Android/iOS",
+        "description"   => "Push notifications to Chrome for Windows, Android and Chrome OS",
         "website"       => "http://github.com/marcandrews/",
         "author"        => "Marc Andrews",
         "authorsite"    => "http://github.com/marcandrews/",
-        "version"       => "0.1.4",
+        "version"       => "0.2.0",
         "codename"      => "gcm_push_notifications_plugin",
         "compatibility" => "18*"
     );
@@ -36,8 +33,7 @@ function gcm_push_notifications_plugin_info()
 
 
 
-function gcm_push_notifications_plugin_install()
-{
+function gcm_push_notifications_plugin_install() {
     global $db;
 
     // Create table to store GCM users
@@ -84,8 +80,7 @@ function gcm_push_notifications_plugin_install()
     );
     
     $s_index = 0;
-    foreach($settings as $name => $setting)
-    {
+    foreach($settings as $name => $setting) {
         $s_index++;
     	$value = $setting['value'];
         $insert_settings = array(
@@ -105,25 +100,21 @@ function gcm_push_notifications_plugin_install()
 
 
 
-function gcm_push_notifications_plugin_is_installed()
-{
+function gcm_push_notifications_plugin_is_installed() {
     global $db;
 
     // Check HTTPS
-    if ((empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'off') || intval($_SERVER['SERVER_PORT']) !== 443) 
-    {
+    if ((empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'off') || intval($_SERVER['SERVER_PORT']) !== 443)  {
         echo '<div class="alert">GCM Push Notifications requires MyBB to be hosted over HTTPS.</div>';
         return false;
     }    
     
     // Check files
     $files = unserialize(GCM_FILES);
-    foreach ($files as $file)
-    {
+    foreach ($files as $file) {
         if (!file_exists('../'.$file)) $missing_files[] = $file;
     }
-    if (!empty($missing_files))
-    {
+    if (!empty($missing_files)) {
         echo '<div class="alert">GCM Push Notifications is missing the following files:<br> '.implode('<br>', $missing_files).'</div>';
         return false;
     }
@@ -134,8 +125,7 @@ function gcm_push_notifications_plugin_is_installed()
     return !empty($group['gid']) && $db->table_exists('gcm');
 }
 
-function gcm_push_notifications_plugin_uninstall()
-{
+function gcm_push_notifications_plugin_uninstall() {
     gcm_push_notifications_plugin_deactivate();
     
     global $db;
@@ -143,8 +133,7 @@ function gcm_push_notifications_plugin_uninstall()
     // Remove settings
     $result = $db->simple_select('settinggroups', 'gid', "name = 'gcm_push_notifications'", array('limit' => 1));
     $group = $db->fetch_array($result);
-    if (!empty($group['gid']))
-    {
+    if (!empty($group['gid'])) {
         $db->delete_query('settinggroups', "gid='{$group['gid']}'");
         $db->delete_query('settings', "gid='{$group['gid']}'");
         rebuild_settings();
@@ -158,8 +147,7 @@ function gcm_push_notifications_plugin_uninstall()
 
 
 
-function gcm_push_notifications_plugin_activate()
-{
+function gcm_push_notifications_plugin_activate() {
     require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets(
         'usercp_options',
@@ -170,11 +158,9 @@ function gcm_push_notifications_plugin_activate()
 
 
 
-function gcm_push_notifications_plugin_deactivate()
-{
+function gcm_push_notifications_plugin_deactivate() {
     require_once MYBB_ROOT."/inc/adminfunctions_templates.php";
-    while (find_replace_templatesets('usercp_options', "#" . preg_quote(GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML) . "#i", ''))
-    {
+    while (find_replace_templatesets('usercp_options', "#" . preg_quote(GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML) . "#i", '')) {
         find_replace_templatesets('usercp_options', "#" . preg_quote(GCM_JSCRIPT_HTML.GCM_MANIFEST_HTML) . "#i", '');
     }
 }
@@ -182,24 +168,19 @@ function gcm_push_notifications_plugin_deactivate()
 
 
 $plugins->add_hook('xmlhttp', 'gcm_push_notifications_xmlhttp');
-function gcm_push_notifications_xmlhttp()
-{
-    error_reporting(E_ALL);
-	ini_set("display_errors", 1);
-    
+function gcm_push_notifications_xmlhttp() {    
     global $db, $mybb;
     
     if ($mybb->user['uid'] and (
             ($mybb->get_input('action') == 'gcm_devices') or 
-            ($mybb->get_input('action') == 'gcm_register' and $mybb->get_input('gcm_subid')) or
-            ($mybb->get_input('action') == 'gcm_revoke' and $mybb->get_input('gcm_subid')) or
+            (($mybb->get_input('action') == 'gcm_register' or $mybb->get_input('action') == 'gcm_revoke') and $mybb->get_input('gcm_subid')) or            
             ($mybb->get_input('action') == 'gcm_notifications')
     )) {
         header('Content-Type: application/json');        
 
         function get_device() {
             function myAutoLoader ($class_name) {
-                require 'inc/gcm_push_notifications/' . str_replace('\\', '/', $class_name) . '.php';
+                require 'inc/plugins/gcm_push_notifications/' . str_replace('\\', '/', $class_name) . '.php';
             }
             spl_autoload_register('myAutoLoader');
 
@@ -227,8 +208,6 @@ function gcm_push_notifications_xmlhttp()
             }
             $output['sql'] = $sql;
             $output['result']['devices'] = $devices;
-            print json_encode($output, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
-            exit;
         }
 
         if ($mybb->get_input('action') == 'gcm_register' and $mybb->get_input('gcm_subid')) {
@@ -258,13 +237,11 @@ function gcm_push_notifications_xmlhttp()
             $output['sql'] = "DELETE FROM ".TABLE_PREFIX."gcm WHERE uid = {$mybb->user['uid']} AND subid = '{$subid_esc}'";
             $output['success'] = $db->write_query($output['sql']);
             if ($output['success']) my_setcookie('deviceid', "");
-            print json_encode($output, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
-            exit;
         }
 
         if ($mybb->get_input('action') == 'gcm_notifications') {
             // Return a subscriber's new threads and posts
-            $output['sql'] = "SELECT s.tid, t.subject, p.pid, p.username, COUNT(DISTINCT s.tid) as unread_threads, COUNT(DISTINCT p.pid) as unread_posts FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsubscriptions s, ".TABLE_PREFIX."threads t, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."posts p WHERE u.uid = s.uid AND s.tid = t.tid AND u.uid = r.uid AND t.tid = r.tid AND t.tid = p.tid AND p.dateline > r.dateline AND u.lastvisit < t.lastpost AND s.uid = {$mybb->user['uid']} ORDER BY p.dateline DESC";
+            $output['sql'] = "SELECT s.tid, t.subject, p.pid, p.username, COUNT(DISTINCT s.tid) as unread_threads, COUNT(DISTINCT p.pid) as unread_posts FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."threadsubscriptions s, ".TABLE_PREFIX."threads t, ".TABLE_PREFIX."threadsread r, ".TABLE_PREFIX."posts p WHERE u.uid = s.uid AND s.tid = t.tid AND u.uid = r.uid AND t.tid = r.tid AND t.tid = p.tid AND p.dateline > r.dateline AND t.lastpost > u.lastvisit  AND s.uid = {$mybb->user['uid']} ORDER BY p.dateline DESC";
             $output['success'] = $db->write_query($output['sql']);
 
             if ($output['success']) {
@@ -272,48 +249,27 @@ function gcm_push_notifications_xmlhttp()
             } else {
                 $output['result'] = false;
             }
-            print json_encode($output, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
-            exit;
+
+            $output['sql_pm'] = "SELECT pm.pmid, fromu.username AS `from`, pm.subject, pm.dateline, COUNT(DISTINCT pm.pmid) as unread_pms FROM ".TABLE_PREFIX."privatemessages pm, ".TABLE_PREFIX."users u, ".TABLE_PREFIX."users fromu WHERE pm.uid = u.uid AND pm.fromid = fromu.uid AND pm.readtime = 0 AND pm.dateline > u.lastvisit AND pm.uid = {$mybb->user['uid']} AND pm.toid = {$mybb->user['uid']} ORDER BY pm.dateline DESC";
+            $output['success_pm'] = $db->write_query($output['sql_pm']);
+            if ($output['success_pm']) {
+                $output['result_pm'] = $db->fetch_array($output['success_pm']);
+            } else {
+                $output['result_pm'] = false;
+            }
         }
-        print json_encode(false);
+        print json_encode($output, JSON_NUMERIC_CHECK | JSON_FORCE_OBJECT);
+        exit;
     }
 }
 
 
 
-$plugins->add_hook('datahandler_post_insert_post', 'gcm_push_notifications_push');
-function gcm_push_notifications_push()
-{
-    global $db, $mybb, $post;
-
-    $date = date('c');
-    $log = "--- start push {$date} ---".PHP_EOL;    
-    
-    if (empty($mybb->settings['gcm_push_notifications_google_sender_id']) or empty($mybb->settings['gcm_push_notifications_google_api_key'])) {
-        $log .= "Error: no sender ID or API key specified".PHP_EOL;
-        $log .= "--- end push {$date} ---".PHP_EOL.PHP_EOL;
-        @file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
-        return false;
-    }
-    
-    $sql = "SELECT s.uid, g.subid FROM mybb_threadsubscriptions s, ".TABLE_PREFIX."gcm g WHERE s.uid = g.uid AND s.uid != {$mybb->user['uid']} AND s.tid = {$post['tid']}";
-    $log .= "SQL:".preg_replace('/\s+/m', ' ', $sql).PHP_EOL;
-    
-    $query = $db->write_query($sql);
-    
-    $users = array();
-    while ($user = $db->fetch_array($query))
-    {
-        if (!empty($user['subid'])) $users[] = $user['subid'];
-    }
-    $log .= "Number of subscribers: ".count($users).PHP_EOL;  
-    
-    if (!empty($users))
-    {    
-        $url = 'https://gcm-http.googleapis.com/gcm/send';
-        $fields = array(
-            'registration_ids' => $users,
-        );
+function gcm_push_notifications_push($users = array()) {
+    global $mybb;
+    if (!empty($users) and is_array($users)) {
+        $url = 'https://android.googleapis.com/gcm/send';
+        $fields = array('registration_ids' => $users);
         $headers = array(
             'Authorization: key='.$mybb->settings['gcm_push_notifications_google_api_key'],
             'Content-Type: application/json'
@@ -325,16 +281,92 @@ function gcm_push_notifications_push()
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
-    
-        $result = curl_exec($ch);
-        $log .= "CURL: ".$result.PHP_EOL;
-        
-        if ($result === FALSE) $log .= "CURL error: ". curl_error($ch).PHP_EOL;
+        $ch_result = curl_exec($ch);
         curl_close($ch);
+		
+        return $ch_result;
     } else {
-        $log .= "Users: no users found".PHP_EOL;
+        return false;
     }
+}
+
+
+
+$plugins->add_hook('datahandler_post_insert_post', 'gcm_push_notifications_post');
+function gcm_push_notifications_post() {
+    global $db, $mybb, $post;
+
+    $date = date('c');
+    $log = "--- START push for posts {$date} ---".PHP_EOL;
+	
+	if (!empty($mybb->settings['gcm_push_notifications_google_sender_id']) and !empty($mybb->settings['gcm_push_notifications_google_api_key']) and !empty($post['tid'])) {
+		$sql = "SELECT g.subid FROM ".TABLE_PREFIX."threadsubscriptions s, ".TABLE_PREFIX."gcm g WHERE s.uid = g.uid AND s.uid != {$mybb->user['uid']} AND s.tid = {$post['tid']}";
+		$log .= "SQL:".preg_replace('/\s+/m', ' ', $sql).PHP_EOL;
+
+		$query = $db->write_query($sql);
+
+		$users = array();
+		while ($user = $db->fetch_array($query)) {
+			if (!empty($user['subid'])) $users[] = $user['subid'];
+		}
+		
+		if (count($users)) {
+			$log .= "Number of subscribers: ".count($users).PHP_EOL;
+
+			$result = gcm_push_notifications_push($users);
+			$log .= "CURL: ".$result.PHP_EOL; 
+		} else {
+			$log .= "WARNING: no subscribers".PHP_EOL;
+			$result = false;
+		}
+	} else {
+		$log .= "ERROR: Google sender ID, API key, or post content missing".count($users).PHP_EOL; 
+		$result = false;
+	}
     
-    $log .= "--- end push {$date} ---".PHP_EOL.PHP_EOL;
-    @file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
+	$log .= "--- END push {$date} ---".PHP_EOL.PHP_EOL;
+	@file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
+	
+	return $result;
+}
+
+
+
+$plugins->add_hook('datahandler_pm_insert_end', 'gcm_push_notifications_pm');
+function gcm_push_notifications_pm() {
+    global $db, $mybb, $pm;
+    
+	$date = date('c');
+    $log = "--- START push for PMs {$date} ---".PHP_EOL;
+   
+    if (!empty($mybb->settings['gcm_push_notifications_google_sender_id']) and !empty($mybb->settings['gcm_push_notifications_google_api_key']) and !empty($pm['to'])) {
+		$recipients = "'".implode("','", $pm['to'])."'";
+		$sql = " SELECT g.subid FROM ".TABLE_PREFIX."users u, ".TABLE_PREFIX."gcm g WHERE u.uid = g.uid AND u.username IN ($recipients) AND g.uid != {$mybb->user['uid']}";
+		$log .= "SQL:".preg_replace('/\s+/m', ' ', $sql).PHP_EOL;
+
+		$query = $db->write_query($sql);
+
+		$users = array();
+		while ($user = $db->fetch_array($query)) {
+			if (!empty($user['subid'])) $users[] = $user['subid'];
+		}
+		
+		if (count($users)) {
+			$log .= "Number of subscribers: ".count($users).PHP_EOL;
+
+			$result = gcm_push_notifications_push($users);
+			$log .= "CURL: ".$result.PHP_EOL; 
+		} else {
+			$log .= "WARNING: no subscribers".PHP_EOL;
+			$result = false;
+		}		
+    } else {
+		$log .= "ERROR: Google sender ID, API key, or post content missing".count($users).PHP_EOL; 
+		$result = false;
+	}
+	
+		$log .= "--- END push {$date} ---".PHP_EOL.PHP_EOL;
+		@file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
+
+		return $result;    
 }

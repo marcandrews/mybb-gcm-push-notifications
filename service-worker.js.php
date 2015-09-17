@@ -3,13 +3,13 @@ header('Content-Type: application/javascript');
 
 define("IN_MYBB", 1);
 define("NO_ONLINE", 1);
-require "global.php"; 
+require "global.php";
 
 function clean($string) {
-    $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-    $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
+    $string = str_replace(' ', '-', $string);
+    $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string);
     $string = strtolower($string);
-    return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
+    return preg_replace('/-+/', '-', $string);
 }
 ?>
 'use strict';
@@ -17,13 +17,10 @@ function clean($string) {
 var ENDPOINT = 'xmlhttp.php';
 
 importScripts('IndexDBWrapper.js');
-var KEY_VALUE_STORE_NAME = 'key-value-store';
-var idb;
-
-// avoid opening idb until first call
+var KEY_VALUE_STORE_NAME = 'key-value-store', idb;
 function getIdb() {
     if (!idb) {
-        idb = new IndexDBWrapper('key-value-store', 1, function (db) {
+        idb = new IndexDBWrapper(KEY_VALUE_STORE_NAME, 1, function (db) {
             db.createObjectStore(KEY_VALUE_STORE_NAME);
         });
     }
@@ -47,16 +44,13 @@ function showNotification(title, body, silent, icon, tag, data) {
 }
 
 self.addEventListener('install', function (event) {
-    // Perform install steps
     if (self.skipWaiting) {
         self.skipWaiting();
     }
 });
 
 self.addEventListener('push', function (event) {
-    // console.log(ENDPOINT);
     console.log('Received a push message', event);
-
     event.waitUntil(
         fetch(ENDPOINT, {
             credentials: 'include',
@@ -71,15 +65,14 @@ self.addEventListener('push', function (event) {
             }
             return response.json();
         }).then(function (json) {
-            // console.log('Parsed json:', json);
-
             if (json) {
+                var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
+                    message,
+                    urlToOpen,
+                    notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
+                    silent = false;
                 if (json.result.unread_threads > 0) {
-                    var title = '<?= htmlspecialchars($mybb->settings['bbname'], ENT_QUOTES) ?>',
-                        message,
-                        urlToOpen,
-                        notificationTag = '<?= clean($mybb->settings['bbname']) ?>',
-                        silent = false;
+                    notificationTag = '<?= clean($mybb->settings['bbname']) ?>_post';
                     if (json.result.unread_threads == 1) {
                         if (json.result.unread_posts == 1) {
                             message = 'New post in ' + json.result.subject + ' from ' + json.result.username + '.';
@@ -93,18 +86,35 @@ self.addEventListener('push', function (event) {
                         silent = true;
                         urlToOpen = 'search.php?action=getnew';
                     }
-                    if (!Notification.prototype.hasOwnProperty('data')) {
+                    // if (!Notification.prototype.hasOwnProperty('data')) {
                         // Since Chrome doesn't support data at the moment
                         // Store the URL in IndexDB
                         getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
-                    }                
-                    return showNotification(title, message, silent, null, notificationTag);
+                    // }
+                    showNotification(title, message, silent, null, notificationTag);
+                }
+
+                if (json.result_pm.unread_pms > 0) {
+                    notificationTag = '<?= clean($mybb->settings['bbname']) ?>_pm';
+                    if (json.result_pm.unread_pms == 1) {
+                        message = 'You have an unread private message from ' + json.result_pm.from + ' titled ' + json.result_pm.subject + '.';
+                        urlToOpen = 'private.php?action=read&pmid=' + json.result_pm.pmid;
+                    } else {
+                        message = 'You have ' + json.result_pm.unread_pms + ' unread private messages.';
+                        silent = true;
+                        urlToOpen = 'private.php';
+                    }
+                    // if (!Notification.prototype.hasOwnProperty('data')) {
+                        // Since Chrome doesn't support data at the moment
+                        // Store the URL in IndexDB
+                        getIdb().put(KEY_VALUE_STORE_NAME, notificationTag, urlToOpen);
+                    // }
+                    showNotification(title, message, silent, null, notificationTag);
                 }
             } else {
                 console.log('No new messages');
             }
-        }).catch(function (ex) {
-            console.log('parsing failed', ex);
+            return;
         }).catch(function (err) {
             console.error('Unable to retrieve data', err);
         })
@@ -113,12 +123,24 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
     console.log('On notification click: ', event);
-    event.waitUntil(getIdb().get(KEY_VALUE_STORE_NAME, event.notification.tag).then(function (url) {
-        // At the moment you cannot open third party URL's, a simple trick
-        // is to redirect to the desired URL from a URL on your domain
-        var redirectUrl = "";
-        if (url) redirectUrl = url;
-        return clients.openWindow(redirectUrl);
-        }));
     event.notification.close();
+    event.waitUntil(
+        Promise.all([
+            getIdb().get(KEY_VALUE_STORE_NAME, event.notification.tag),
+            clients.matchAll({ type: 'window' })
+        ]).then(function (resultArray) {
+            var urlToOpen = resultArray[0] || '/';
+            var clientList = resultArray[1];
+            for (var i = 0; i < clientList.length; i++) {
+                var client = clientList[i];
+                if (client.url.lastIndexOf('<?= $mybb->settings['bburl'] ?>') === 0 && 'navigate' in client && 'focus' in client) {
+                    client.navigate(urlToOpen);
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
 });
