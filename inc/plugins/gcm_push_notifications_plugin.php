@@ -25,7 +25,7 @@ function gcm_push_notifications_plugin_info() {
         "website"       => "http://github.com/marcandrews/",
         "author"        => "Marc Andrews",
         "authorsite"    => "http://github.com/marcandrews/",
-        "version"       => "0.2.0",
+        "version"       => "0.2.2",
         "codename"      => "gcm_push_notifications_plugin",
         "compatibility" => "18*"
     );
@@ -327,7 +327,7 @@ function gcm_push_notifications_post() {
 	$log .= "--- END push {$date} ---".PHP_EOL.PHP_EOL;
 	@file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
 	
-	return $result;
+	//return $result;
 }
 
 
@@ -365,8 +365,8 @@ function gcm_push_notifications_pm() {
 		$result = false;
 	}
 	
-		$log .= "--- END push {$date} ---".PHP_EOL.PHP_EOL;
-		@file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
+	$log .= "--- END push {$date} ---".PHP_EOL.PHP_EOL;
+	@file_put_contents("inc/plugins/gcm_push_notifications_plugin.log", $log, FILE_APPEND);
 
-		return $result;    
+	//return $result;    
 }
