@@ -6,12 +6,12 @@
 
 !*/
 !images/icon-192x192.png
-!inc/gcm_push_notifications/*
-!inc/gcm_push_notifications/*/*
-!inc/gcm_push_notifications/*/*/*
-!inc/gcm_push_notifications/*/*/*
-!inc/gcm_push_notifications/*/*/*/*
-!inc/gcm_push_notifications/*/*/*/*/*
+!inc/plugins/gcm_push_notifications/*
+!inc/plugins/gcm_push_notifications/*/*
+!inc/plugins/gcm_push_notifications/*/*/*
+!inc/plugins/gcm_push_notifications/*/*/*
+!inc/plugins/gcm_push_notifications/*/*/*/*
+!inc/plugins/gcm_push_notifications/*/*/*/*/*
 !inc/plugins/gcm_push_notifications_plugin.php
 !inc/plugins/gcm_push_notifications_plugin.log
 !jscripts/gcm_push_notifications.js.php
