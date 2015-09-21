@@ -25,7 +25,7 @@ function gcm_push_notifications_plugin_info() {
         "website"       => "http://github.com/marcandrews/",
         "author"        => "Marc Andrews",
         "authorsite"    => "http://github.com/marcandrews/",
-        "version"       => "0.2.2",
+        "version"       => "0.9.0",
         "codename"      => "gcm_push_notifications_plugin",
         "compatibility" => "18*"
     );
