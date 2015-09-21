@@ -161,11 +161,11 @@ function gcm_push_notifications_plugin_deactivate() {
 
 $plugins->add_hook('pre_output_page', 'gcm_push_notifications_global');
 function gcm_push_notifications_global($page) {
-	//global $mybb;
+	global $mybb;
 	
-	//if (THIS_SCRIPT == 'usercp.php' and $mybb->input['action'] == 'options') {
+	if ($mybb->user['uid']) {
     	return str_replace('</head>', GCM_MANIFEST_HTML.PHP_EOL.GCM_JSCRIPT_HTML.PHP_EOL.'</head>', $page);
-	//}
+	}
 }
 
 
