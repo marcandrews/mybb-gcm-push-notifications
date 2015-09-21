@@ -19,3 +19,5 @@
 !IndexDBWrapper.js
 !manifest.json.php
 !service-worker.js.php
+
+/.assets/i/Thumbs.db
