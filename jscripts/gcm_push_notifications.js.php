@@ -5,10 +5,11 @@ define('IN_MYBB', 1);
 define('NO_ONLINE', 1);
 require '../global.php';
 ?>
-var ENDPOINT = 'xmlhttp.php';
-var isEnabled = false;
-
 var gcmPushNotifications = {
+	
+	endPoint: 'xmlhttp.php',
+	isEnabled: false,
+	subscriptionId: null,
 
 	cookies: {
 
@@ -50,46 +51,36 @@ var gcmPushNotifications = {
 				referenceNode.insertAdjacentHTML('afterend', '<div><br><strong>Push Notifications</strong></div><button type="button" class="gcm-push-button btn btn-primary" style="display:block">Enable Push Notifciations</button>');
 				var pushButton = document.querySelector('.gcm-push-button');
 				pushButton.addEventListener('click', function () {
-					if (isEnabled) {
+					if (gcmPushNotifications.isEnabled) {
 						gcmPushNotifications.unsubscribe();
 					} else {
 						gcmPushNotifications.subscribe();
 					}
 				});
 
-				fetch(ENDPOINT, {
+				fetch(gcmPushNotifications.endPoint, {
 					credentials: 'include',
 					method: 'post',
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 					body: 'action=gcm_devices'
 				}).then(function(response) {
-					if (response.status !== 200) {
-						console.log('Looks like there was a problem. Status Code: ' + response.status);
-						// Throw an error so the promise is rejected and catch() is executed
-						throw new Error();
-					}
+					if (response.status !== 200) throw new Error(response.statusText);
 					return response.json();
 				}).then(function(json) {
-					console.log('Parsed json:', json.result.devices);
-					if (json) {
-						var n = Object.keys(json.result.devices).length;
-						for (i = 0; i < n; i++) { 
-							if (typeof subscriptionId !== 'undefined' && json.result.devices[i].subid == subscriptionId) {
-								pushButton.style.display = 'none';
-								pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.devices[i].deviceid + '" class="current">' + json.result.devices[i].device + ' <strong class="label label-success">current</strong> <button type="button" class="btn btn-danger btn-xs" onClick="gcmPushNotifications.unsubscribe(\'' + json.result.devices[i].deviceid + '\')">remove</button></div>');
-							} else {
-								pushButton.insertAdjacentHTML('afterend', '<div id="did'+json.result.devices[i].deviceid+'">'+json.result.devices[i].device+' <button type="button" class="btn btn-danger btn-xs" onClick="gcmPushNotifications.server.revoke(\'' + json.result.devices[i].subscriptionId + '\',\'' + json.result.devices[i].deviceid + '\')">remove</button></div>');
-							}
+					for (var i = 0; i < Object.keys(json.result.devices).length; i++) { 
+						if (json.result.devices[i].subid == gcmPushNotifications.subscriptionId) {
+							pushButton.style.display = 'none';
+							pushButton.insertAdjacentHTML('afterend', '<div id="did' + json.result.devices[i].deviceid + '" class="current">' + json.result.devices[i].device + ' <strong class="label label-success">current</strong> <button type="button" class="btn btn-danger btn-xs" onClick="gcmPushNotifications.unsubscribe(\'' + json.result.devices[i].deviceid + '\')">remove</button></div>');
+						} else {
+							pushButton.insertAdjacentHTML('afterend', '<div id="did'+json.result.devices[i].deviceid+'">'+json.result.devices[i].device+' <button type="button" class="btn btn-danger btn-xs" onClick="gcmPushNotifications.server.revoke(\'' + json.result.devices[i].deviceid + '\')">remove</button></div>');
 						}
-					} else {
-						console.log('No registered devices found');
 					}
 				}).catch(function(e) {
 					console.error('Unable to retrieve data', e);
 				});
 
 			} else {
-				if (isEnabled == false && !gcmPushNotifications.cookies.get('hidePermissionUI') && gcmPushNotifications.permissionUI.hasMetaRefresh() == false) {
+				if (gcmPushNotifications.isEnabled == false && !gcmPushNotifications.cookies.get('hidePermissionUI') && gcmPushNotifications.permissionUI.hasMetaRefresh() == false) {
 					// Add UI to the page bottom
 					var permissionDiv = document.createElement('div');
 					permissionDiv.id = 'push-notifications-permission-ui';
@@ -145,38 +136,38 @@ var gcmPushNotifications = {
 	
 	server: {
 
-		register: function (subid) {
-			fetch(ENDPOINT, {
+		register: function () {
+			fetch(gcmPushNotifications.endPoint, {
 				credentials: 'include',
 				method: 'post',
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: 'action=gcm_register&gcm_subid='+subid
+				body: 'action=gcm_register&gcm_subid='+gcmPushNotifications.subscriptionId
 			}).then(function(response) {
 				if (response.status >= 200 && response.status < 300) return response.json();
 				throw new Error(response.statusText);
 			}).then(function(json) {
 				gcmPushNotifications.permissionUI.register(json.result.device, json.result.deviceid);
-				console.log('Register succeeded with json response: ', json)
-			}).catch(function(error) {
-				console.log('Register failed:', error)
+				console.info('Subscription registered to server');
+			}).catch(function(e) {
+				console.error('Register failed:', e);
 			})
 
 		},
 
-		revoke: function (subid, deviceid) {
-			fetch(ENDPOINT, {
+		revoke: function (deviceid) {
+			fetch(gcmPushNotifications.endPoint, {
 				credentials: 'include',
 				method: 'post',
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-				body: 'action=gcm_revoke&gcm_subid='+subid,
+				body: 'action=gcm_revoke&gcm_subid='+gcmPushNotifications.subscriptionId
 			}).then(function(response) {
 				if (response.status >= 200 && response.status < 300) return response.json();
 				throw new Error(response.statusText);
 			}).then(function(json) {
-				gcmPushNotifications.permissionUI.revoke(deviceid)
-				console.log('Revoke succeeded with json response: ', json)
-			}).catch(function(error) {
-				console.log('Revoke failed:', error)
+				gcmPushNotifications.permissionUI.revoke(deviceid);
+				console.info('Subscription revoked from server');
+			}).catch(function(e) {
+				console.error('Revoke failed:', e);
 			})
 		}
 
@@ -208,7 +199,11 @@ var gcmPushNotifications = {
 		navigator.serviceWorker.ready.then(function(serviceWorkerRegistration) {
 			// Do we already have a push message subscription?  
 			serviceWorkerRegistration.pushManager.getSubscription().then(function(subscription) {
-				if (subscription) isEnabled = true;
+				if (subscription) {
+					gcmPushNotifications.isEnabled = true;
+					var endpointParts = subscription.endpoint.split(/\//);
+					gcmPushNotifications.subscriptionId = endpointParts[endpointParts.length - 1];
+				}
 
 				// Enable any UI which subscribes / unsubscribes from  
 				// push messages.
@@ -223,12 +218,9 @@ var gcmPushNotifications = {
 				}
 
 				// Keep your server in sync with the latest subscriptionId
-				var endpointParts = subscription.endpoint.split('/');
-				subscriptionId = endpointParts[endpointParts.length - 1];
-				gcmPushNotifications.server.register(subscriptionId);
-			})
-			.catch(function(error) {
-				console.warn('Error during getSubscription()', error);
+				gcmPushNotifications.server.register();
+			}).catch(function(e) {
+				console.warn('Error during getSubscription()', e);
 			});
 		});
 	},
@@ -241,10 +233,9 @@ var gcmPushNotifications = {
 		if (pushButton) pushButton.disabled = true;
 
 		navigator.serviceWorker.ready.then(function(serviceWorkerRegistration) {
-			serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true})
-			.then(function(subscription) {
+			serviceWorkerRegistration.pushManager.subscribe({userVisibleOnly: true}).then(function(subscription) {
 				// The subscription was successful  
-				isEnabled = true;
+				gcmPushNotifications.isEnabled = true;
 				if (pushButton) {
 					pushButton.textContent = 'Disable Push Notifciations';
 					pushButton.disabled = false;
@@ -253,11 +244,10 @@ var gcmPushNotifications = {
 				// Send the subscription.subscriptionId and   
 				// subscription.endpoint to your server  
 				// and save it to send a push message at a later date
-				var endpointParts = subscription.endpoint.split('/');
-				subscriptionId = endpointParts[endpointParts.length - 1];
-				return gcmPushNotifications.server.register(subscriptionId);
-			})
-			.catch(function(e) {
+				var endpointParts = subscription.endpoint.split(/\//);
+				gcmPushNotifications.subscriptionId = endpointParts[endpointParts.length - 1];
+				return gcmPushNotifications.server.register();
+			}).catch(function(e) {
 				if (Notification.permission === 'denied') {
 					// The user denied the notification permission which  
 					// means we failed to subscribe and the user will need  
@@ -285,14 +275,12 @@ var gcmPushNotifications = {
 		navigator.serviceWorker.ready.then(function(serviceWorkerRegistration) {
 			// To unsubscribe from push messaging, you need get the  
 			// subscription object, which you can call unsubscribe() on.  
-			serviceWorkerRegistration.pushManager.getSubscription()
-			.then(function(subscription) {
+			serviceWorkerRegistration.pushManager.getSubscription().then(function(subscription) {
 				// Check we have a subscription to unsubscribe  
-				console.log(subscription);
 				if (!subscription) {
 					// No subscription object, so set the state  
 					// to allow the user to subscribe to push  
-					isEnabled = false;
+					gcmPushNotifications.isEnabled = false;
 					if (pushButton) { 
 						pushButton.disabled = false;
 						pushButton.textContent = 'Enable Push Notifciations';
@@ -303,15 +291,15 @@ var gcmPushNotifications = {
 				// Make a request to your server to remove  
 				// the subscriptionId from your data store so you   
 				// don't attempt to send them push messages anymore
-				var endpointParts = subscription.endpoint.split('/');
-				subscriptionId = endpointParts[endpointParts.length - 1];
-				gcmPushNotifications.server.revoke(subscriptionId, deviceid);
+				var endpointParts = subscription.endpoint.split(/\//);
+				gcmPushNotifications.subscriptionId = endpointParts[endpointParts.length - 1];
+				gcmPushNotifications.server.revoke(deviceid);
 
 				// We have a subscription, so call unsubscribe on it  
 				subscription.unsubscribe().then(function(successful) {
 					if (pushButton) pushButton.disabled = false;
 					if (pushButton) pushButton.textContent = 'Enable Push Notifciations';
-					isEnabled = false;
+					gcmPushNotifications.isEnabled = false;
 				}).catch(function(e) {
 					// We failed to unsubscribe, this can lead to  
 					// an unusual state, so may be best to remove   
